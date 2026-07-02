@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roanoke VA - Early Voting Heatmap</title>
+    
+    <!-- Tailwind CSS for layout styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Leaflet CSS for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #map {
+            flex-grow: 1;
+            width: 100%;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            z-index: 1; /* Keep map below the header/controls if needed */
+        }
+        .info-legend {
+            background: white;
+            padding: 10px 14px;
+            font-size: 14px;
+            line-height: 24px;
+            color: #333;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+        .info-legend h4 {
+            margin: 0 0 5px;
+            color: #111;
+            font-weight: 600;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .legend-color {
+            width: 18px;
+            height: 18px;
+            margin-right: 8px;
+            opacity: 0.7;
+            border: 1px solid #777;
+        }
+        .custom-popup .leaflet-popup-content-wrapper {
+            background: #ffffff;
+            color: #1e293b;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .custom-popup .leaflet-popup-content {
+            margin: 14px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-6 lg:p-8 flex flex-col h-screen">
+
+    <header class="mb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Roanoke City, VA - Early Voting</h1>
+            <p id="map-subtitle" class="text-slate-600 mt-1">Interactive Heatmap by Zip Code (June 2024 Primary)</p>
+        </div>
+        
+        <div class="bg-white p-2 rounded-lg shadow-sm border border-slate-200 z-10">
+            <label for="date-selector" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Select Election Data</label>
+            <select id="date-selector" class="w-full md:w-auto bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded focus:ring-blue-500 focus:border-blue-500 block p-2 cursor-pointer outline-none">
+                <option value="jun2024" selected>June 2024 Primary</option>
+                <option value="jul01">July 1, 2026</option>
+                <option value="jun26">June 26, 2026</option>
+            </select>
+        </div>
+    </header>
+
+    <main class="flex-grow relative flex flex-col">
+        <!-- Container for the Leaflet Map -->
+        <div id="map"></div>
+        
+        <!-- Loading Overlay -->
+        <div id="loader" class="absolute inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-lg">
+            <div class="flex flex-col items-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900 mb-3"></div>
+                <p class="text-slate-800 font-medium">Fetching authentic Zip Code boundaries...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <script>
+        // Initialize the map, centered approximately on Roanoke, VA
+        const map = L.map('map', {
+            center: [37.27, -79.94], // Roanoke center coordinates
+            zoom: 12,
+            minZoom: 10
+        });
+
+        // Add a base layer (CartoDB Positron for clean data visualization)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Map containing the early voting data for multiple dates
+        const votingData = {
+            "24011": { jun26: 5, jul01: 7, jun2024: 27 },
+            "24012": { jun26: 100, jul01: 116, jun2024: 409 },
+            "24013": { jun26: 24, jul01: 26, jun2024: 85 },
+            "24014": { jun26: 79, jul01: 93, jun2024: 388 },
+            "24015": { jun26: 116, jul01: 132, jun2024: 749 },
+            "24016": { jun26: 60, jul01: 65, jun2024: 375 },
+            "24017": { jun26: 171, jul01: 199, jun2024: 892 },
+            "24018": { jun26: 55, jul01: 66, jun2024: 221 },
+            "24019": { jun26: 12, jul01: 18, jun2024: 96 }
+        };
+
+        const roanokeZips = Object.keys(votingData);
+        let currentDateKey = 'jun2024';
+
+        // Predefined scales to accurately represent the varied magnitudes of each dataset
+        const scales = {
+            'jun26': [0, 25, 50, 75, 100, 125, 150],
+            'jul01': [0, 30, 60, 90, 120, 150, 180],
+            'jun2024': [0, 50, 100, 200, 400, 600, 800]
+        };
+
+        const datasetLabels = {
+            'jun26': 'June 26, 2026',
+            'jul01': 'July 1, 2026',
+            'jun2024': 'June 2024 Primary'
+        };
+
+        // Function to determine color based on dynamically selected scale
+        function getColor(v) {
+            const grades = scales[currentDateKey];
+            return v >= grades[6] ? '#800026' :
+                   v >= grades[5] ? '#BD0026' :
+                   v >= grades[4] ? '#E31A1C' :
+                   v >= grades[3] ? '#FC4E2A' :
+                   v >= grades[2] ? '#FD8D3C' :
+                   v >= grades[1] ? '#FEB24C' :
+                   v >= grades[0] ? '#FFEDA0' :
+                                    '#e2e8f0'; // Default gray if no data
+        }
+
+        // Function to style each GeoJSON feature
+        function style(feature) {
+            const zipCode = feature.properties.ZCTA5CE10;
+            const voteCount = votingData[zipCode] ? votingData[zipCode][currentDateKey] : 0;
+            
+            return {
+                fillColor: getColor(voteCount),
+                weight: 1.5,
+                opacity: 1,
+                color: '#334155', // Dark slate border for authentic look
+                fillOpacity: 0.75
+            };
+        }
+
+        // Variable to hold the GeoJSON layer and legend
+        var geojsonLayer;
+        var legendControl;
+
+        // Event listener functions for mouse interactions
+        function highlightFeature(e) {
+            var layer = e.target;
+            layer.setStyle({
+                weight: 3,
+                color: '#0f172a',
+                fillOpacity: 0.95
+            });
+            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                layer.bringToFront();
+            }
+        }
+
+        function resetHighlight(e) {
+            geojsonLayer.resetStyle(e.target);
+        }
+
+        function generatePopupContent(zipCode) {
+            const voteCount = votingData[zipCode] ? votingData[zipCode][currentDateKey] : 0;
+            return `
+                <div class="text-center p-1">
+                    <h3 class="font-bold text-lg text-slate-800 border-b pb-1 mb-2">Zip Code: ${zipCode}</h3>
+                    <p class="text-4xl font-extrabold text-blue-600 mb-1">${voteCount}</p>
+                    <p class="text-xs text-slate-500 uppercase tracking-wide font-semibold">Total Early Votes</p>
+                    <p class="text-[10px] text-slate-400 mt-2">Data from ${datasetLabels[currentDateKey]}</p>
+                </div>
+            `;
+        }
+
+        // Attach popups and interactions to each feature boundary
+        function onEachFeature(feature, layer) {
+            const zipCode = feature.properties.ZCTA5CE10;
+            
+            layer.bindPopup(generatePopupContent(zipCode), {className: 'custom-popup'});
+
+            layer.on({
+                mouseover: highlightFeature,
+                mouseout: resetHighlight
+            });
+        }
+
+        // Fetch real GeoJSON boundaries for VA from OpenData Github repo
+        const vaGeoJsonUrl = 'https://raw.githubusercontent.com/OpenDataDE/State-zip-code-GeoJSON/master/va_virginia_zip_codes_geo.min.json';
+
+        fetch(vaGeoJsonUrl)
+            .then(response => {
+                if (!response.ok) throw new Error("Network response was not ok");
+                return response.json();
+            })
+            .then(data => {
+                // Filter the large statewide dataset down to just our target Roanoke zip codes
+                const roanokeFeatures = data.features.filter(feature => {
+                    return roanokeZips.includes(feature.properties.ZCTA5CE10);
+                });
+
+                const roanokeGeoJSON = {
+                    type: "FeatureCollection",
+                    features: roanokeFeatures
+                };
+
+                // Add filtered, accurate boundaries to map
+                geojsonLayer = L.geoJson(roanokeGeoJSON, {
+                    style: style,
+                    onEachFeature: onEachFeature
+                }).addTo(map);
+                
+                // Adjust map viewport to perfectly fit the authentic boundaries
+                map.fitBounds(geojsonLayer.getBounds(), {padding: [30, 30]});
+
+                // Remove loading overlay and initialize legend
+                document.getElementById('loader').style.display = 'none';
+                updateLegend();
+            })
+            .catch(error => {
+                console.error('Error loading GeoJSON data:', error);
+                document.getElementById('loader').innerHTML = `
+                    <div class="text-center text-red-600 bg-red-50 p-4 rounded-lg border border-red-200">
+                        <p class="font-bold">Failed to load geographic boundaries.</p>
+                        <p class="text-sm mt-1">Please try refreshing the page.</p>
+                    </div>
+                `;
+            });
+
+        // Function to build/rebuild the map legend dynamically
+        function updateLegend() {
+            if (legendControl) {
+                map.removeControl(legendControl);
+            }
+
+            legendControl = L.control({position: 'bottomright'});
+            legendControl.onAdd = function (map) {
+                const div = L.DomUtil.create('div', 'info-legend');
+                const grades = scales[currentDateKey];
+                
+                div.innerHTML = '<h4 class="border-b border-slate-200 pb-1 mb-2">Early Votes</h4>';
+
+                for (let i = 0; i < grades.length; i++) {
+                    div.innerHTML +=
+                        '<div class="legend-item">' +
+                        '<i class="legend-color" style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+                        grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] : '+') +
+                        '</div>';
+                }
+                return div;
+            };
+            legendControl.addTo(map);
+        }
+
+        // Handle dropdown selection changes
+        document.getElementById('date-selector').addEventListener('change', function(e) {
+            currentDateKey = e.target.value;
+            
+            // Update Title/Subtitle
+            document.getElementById('map-subtitle').innerText = `Interactive Heatmap by Zip Code (${datasetLabels[currentDateKey]})`;
+
+            // Update all map polygons and popups
+            if (geojsonLayer) {
+                geojsonLayer.eachLayer(function(layer) {
+                    layer.setStyle(style(layer.feature));
+                    const zipCode = layer.feature.properties.ZCTA5CE10;
+                    layer.setPopupContent(generatePopupContent(zipCode));
+                });
+            }
+
+            // Update Legend Scale
+            updateLegend();
+        });
+    </script>
+</body>
+</html>
