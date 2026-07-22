@@ -74,14 +74,15 @@
     <header class="mb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
             <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Roanoke City, VA - Early Voting</h1>
-            <p id="map-subtitle" class="text-slate-600 mt-1">Interactive Heatmap by Zip Code (July 15, 2026)</p>
+            <p id="map-subtitle" class="text-slate-600 mt-1">Interactive Heatmap by Zip Code (July 22, 2026)</p>
         </div>
         
         <div class="bg-white p-2 rounded-lg shadow-sm border border-slate-200 z-10">
             <label for="date-selector" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Select Election Data</label>
             <select id="date-selector" class="w-full md:w-auto bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded focus:ring-blue-500 focus:border-blue-500 block p-2 cursor-pointer outline-none">
-                <!-- Added new option for July 15 and set as default -->
-                <option value="jul15" selected>July 15, 2026</option>
+                <!-- Added new option for July 22 and set as default -->
+                <option value="jul22" selected>July 22, 2026</option>
+                <option value="jul15">July 15, 2026</option>
                 <option value="jul08">July 8, 2026</option>
                 <option value="jul01">July 1, 2026</option>
                 <option value="jun26">June 26, 2026</option>
@@ -122,28 +123,29 @@
         }).addTo(map);
 
         // Map containing the early voting data for multiple dates
-        // Note: The data was populated referencing "Early Vote 20260715_2.xlsx" verbatim as requested.
+        // Note: The data was populated referencing "image_9723d9.png" verbatim as requested.
         const votingData = {
-            "24011": { jun26: 5, jul01: 7, jul08: 7, jul15: 7, jun2024: 27 },
-            "24012": { jun26: 100, jul01: 116, jul08: 139, jul15: 162, jun2024: 409 },
-            "24013": { jun26: 24, jul01: 26, jul08: 33, jul15: 38, jun2024: 85 },
-            "24014": { jun26: 79, jul01: 93, jul08: 100, jul15: 125, jun2024: 388 },
-            "24015": { jun26: 116, jul01: 132, jul08: 162, jul15: 199, jun2024: 749 },
-            "24016": { jun26: 60, jul01: 65, jul08: 78, jul15: 86, jun2024: 375 },
-            "24017": { jun26: 171, jul01: 199, jul08: 229, jul15: 277, jun2024: 892 },
-            "24018": { jun26: 55, jul01: 66, jul08: 75, jul15: 87, jun2024: 221 },
-            "24019": { jun26: 12, jul01: 18, jul08: 22, jul15: 25, jun2024: 96 }
+            "24011": { jun26: 5, jul01: 7, jul08: 7, jul15: 7, jul22: 14, jun2024: 27 },
+            "24012": { jun26: 100, jul01: 116, jul08: 139, jul15: 162, jul22: 182, jun2024: 409 },
+            "24013": { jun26: 24, jul01: 26, jul08: 33, jul15: 38, jul22: 48, jun2024: 85 },
+            "24014": { jun26: 79, jul01: 93, jul08: 100, jul15: 125, jul22: 155, jun2024: 388 },
+            "24015": { jun26: 116, jul01: 132, jul08: 162, jul15: 199, jul22: 244, jun2024: 749 },
+            "24016": { jun26: 60, jul01: 65, jul08: 78, jul15: 86, jul22: 111, jun2024: 375 },
+            "24017": { jun26: 171, jul01: 199, jul08: 229, jul15: 277, jul22: 345, jun2024: 892 },
+            "24018": { jun26: 55, jul01: 66, jul08: 75, jul15: 87, jul22: 102, jun2024: 221 },
+            "24019": { jun26: 12, jul01: 18, jul08: 22, jul15: 25, jul22: 38, jun2024: 96 }
         };
 
         const roanokeZips = Object.keys(votingData);
-        let currentDateKey = 'jul15'; // Defaulted to the newest data
+        let currentDateKey = 'jul22'; // Defaulted to the newest data
 
         // Predefined scales to accurately represent the varied magnitudes of each dataset
         const scales = {
             'jun26': [0, 25, 50, 75, 100, 125, 150],
             'jul01': [0, 30, 60, 90, 120, 150, 180],
             'jul08': [0, 40, 80, 120, 160, 200, 240], 
-            'jul15': [0, 50, 100, 150, 200, 250, 300], // Added scale for newly updated Jul 15 data
+            'jul15': [0, 50, 100, 150, 200, 250, 300],
+            'jul22': [0, 60, 120, 180, 240, 300, 360], // Added scale for newly updated Jul 22 data
             'jun2024': [0, 50, 100, 200, 400, 600, 800]
         };
 
@@ -151,7 +153,8 @@
             'jun26': 'June 26, 2026',
             'jul01': 'July 1, 2026',
             'jul08': 'July 8, 2026', 
-            'jul15': 'July 15, 2026', // Label for the newest dataset
+            'jul15': 'July 15, 2026', 
+            'jul22': 'July 22, 2026', // Label for the newest dataset
             'jun2024': 'June 2024 Primary'
         };
 
