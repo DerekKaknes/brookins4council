@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roanoke VA - Early Voting Trends</title>
+    
+    <!-- Tailwind CSS for layout and styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js for the interactive line chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex flex-col items-center">
+
+    <div class="w-full max-w-5xl">
+        <header class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Early Voting Growth Trends</h1>
+                <p class="text-slate-500 mt-1">Tracking 2026 cumulative totals vs. June 2024 Primary</p>
+            </div>
+            
+            <div class="bg-white p-2 rounded-lg shadow-sm border border-slate-200">
+                <label for="zip-selector" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Select Area</label>
+                <select id="zip-selector" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded focus:ring-blue-500 focus:border-blue-500 block p-2 cursor-pointer outline-none font-medium">
+                    <option value="ALL" selected>Citywide Total</option>
+                    <option value="24011">Zip Code 24011</option>
+                    <option value="24012">Zip Code 24012</option>
+                    <option value="24013">Zip Code 24013</option>
+                    <option value="24014">Zip Code 24014</option>
+                    <option value="24015">Zip Code 24015</option>
+                    <option value="24016">Zip Code 24016</option>
+                    <option value="24017">Zip Code 24017</option>
+                    <option value="24018">Zip Code 24018</option>
+                    <option value="24019">Zip Code 24019</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- Dynamic Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
+                <span class="text-sm font-semibold text-slate-500 uppercase">Current 2026 Votes (Jul 29)</span>
+                <span id="stat-current" class="text-4xl font-bold text-blue-600 mt-2">--</span>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
+                <span class="text-sm font-semibold text-slate-500 uppercase">2024 Primary Benchmark</span>
+                <span id="stat-2024" class="text-4xl font-bold text-slate-700 mt-2">--</span>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
+                <span class="text-sm font-semibold text-slate-500 uppercase">% of 2024 Reached</span>
+                <div class="flex items-baseline gap-2 mt-2">
+                    <span id="stat-percent" class="text-4xl font-bold text-emerald-600">--%</span>
+                    <span class="text-sm text-slate-400 font-medium">so far</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Container -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6 w-full relative h-[400px] md:h-[500px]">
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // The definitive dataset parsed from the provided documents
+        const rawVotingData = {
+            "24011": { jun26: 5, jul01: 7, jul08: 7, jul15: 7, jul22: 14, jul29: 15, jun2024: 27 },
+            "24012": { jun26: 100, jul01: 116, jul08: 139, jul15: 162, jul22: 182, jul29: 232, jun2024: 409 },
+            "24013": { jun26: 24, jul01: 26, jul08: 33, jul15: 38, jul22: 48, jul29: 60, jun2024: 85 },
+            "24014": { jun26: 79, jul01: 93, jul08: 100, jul15: 125, jul22: 155, jul29: 234, jun2024: 388 },
+            "24015": { jun26: 116, jul01: 132, jul08: 162, jul15: 199, jul22: 244, jul29: 382, jun2024: 749 },
+            "24016": { jun26: 60, jul01: 65, jul08: 78, jul15: 86, jul22: 111, jul29: 155, jun2024: 375 },
+            "24017": { jun26: 171, jul01: 199, jul08: 229, jul15: 277, jul22: 345, jul29: 458, jun2024: 892 },
+            "24018": { jun26: 55, jul01: 66, jul08: 75, jul15: 87, jul22: 102, jul29: 124, jun2024: 221 },
+            "24019": { jun26: 12, jul01: 18, jul08: 22, jul15: 25, jul22: 38, jul29: 51, jun2024: 96 }
+        };
+
+        const timeLabels = ['June 26', 'July 1', 'July 8', 'July 15', 'July 22', 'July 29'];
+        const keys = ['jun26', 'jul01', 'jul08', 'jul15', 'jul22', 'jul29'];
+
+        // Calculate Citywide totals
+        const cityTotal = {
+            jun26: 0, jul01: 0, jul08: 0, jul15: 0, jul22: 0, jul29: 0, jun2024: 0
+        };
+
+        Object.values(rawVotingData).forEach(zip => {
+            cityTotal.jun26 += zip.jun26;
+            cityTotal.jul01 += zip.jul01;
+            cityTotal.jul08 += zip.jul08;
+            cityTotal.jul15 += zip.jul15;
+            cityTotal.jul22 += zip.jul22;
+            cityTotal.jul29 += zip.jul29;
+            cityTotal.jun2024 += zip.jun2024;
+        });
+
+        rawVotingData['ALL'] = cityTotal;
+
+        let currentChart = null;
+
+        function renderChart(zipKey) {
+            const data = rawVotingData[zipKey];
+            
+            // Extract the time series data for 2026
+            const trendData = keys.map(k => data[k]);
+            
+            // Create a flat array for the horizontal 2024 benchmark line
+            const benchmarkData = Array(timeLabels.length).fill(data.jun2024);
+
+            // Update UI Stats
+            const currentVotes = data.jul29;
+            const targetVotes = data.jun2024;
+            const percent = ((currentVotes / targetVotes) * 100).toFixed(1);
+
+            document.getElementById('stat-current').innerText = currentVotes.toLocaleString();
+            document.getElementById('stat-2024').innerText = targetVotes.toLocaleString();
+            document.getElementById('stat-percent').innerText = `${percent}%`;
+
+            const ctx = document.getElementById('trendChart').getContext('2d');
+
+            // Destroy previous chart instance if it exists to prevent overlapping bugs
+            if (currentChart) {
+                currentChart.destroy();
+            }
+
+            // Configure gradient for the line chart fill
+            const gradientFill = ctx.createLinearGradient(0, 0, 0, 400);
+            gradientFill.addColorStop(0, 'rgba(37, 99, 235, 0.2)'); // Blue-600 with opacity
+            gradientFill.addColorStop(1, 'rgba(37, 99, 235, 0)');
+
+            currentChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [
+                        {
+                            label: '2026 Cumulative Early Votes',
+                            data: trendData,
+                            borderColor: '#2563eb', // blue-600
+                            backgroundColor: gradientFill,
+                            borderWidth: 3,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#2563eb',
+                            pointBorderWidth: 2,
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            fill: true,
+                            tension: 0.3 // Smooth curves
+                        },
+                        {
+                            label: 'June 2024 Primary Total',
+                            data: benchmarkData,
+                            borderColor: '#ef4444', // red-500
+                            borderWidth: 2,
+                            borderDash: [8, 4], // Dashed line effect
+                            pointRadius: 0, // Hide points on the horizontal line
+                            pointHoverRadius: 0,
+                            fill: false,
+                            tension: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    family: "'Inter', sans-serif",
+                                    size: 13
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleFont: {
+                                family: "'Inter', sans-serif",
+                                size: 14
+                            },
+                            bodyFont: {
+                                family: "'Inter', sans-serif",
+                                size: 13
+                            },
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#e2e8f0', // slate-200
+                                drawBorder: false,
+                            },
+                            ticks: {
+                                font: {
+                                    family: "'Inter', sans-serif"
+                                },
+                                color: '#64748b' // slate-500
+                            },
+                            title: {
+                                display: true,
+                                text: 'Total Votes Cast',
+                                color: '#94a3b8',
+                                font: {
+                                    family: "'Inter', sans-serif",
+                                    size: 12,
+                                    weight: '600'
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false,
+                                drawBorder: false,
+                            },
+                            ticks: {
+                                font: {
+                                    family: "'Inter', sans-serif",
+                                    weight: '500'
+                                },
+                                color: '#475569' // slate-600
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize the chart with 'ALL' citywide data on load
+        window.onload = () => {
+            renderChart('ALL');
+        };
+
+        // Listen for dropdown changes
+        document.getElementById('zip-selector').addEventListener('change', function(e) {
+            renderChart(e.target.value);
+        });
+    </script>
+</body>
+</html>
