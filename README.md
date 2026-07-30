@@ -2,6 +2,6 @@
 ## Early Vote Data Heat Map
 
 This repository updates an HTML file with early vote data by zipcode for the 2026 Roanoke City Democratic Primary. 
-you can view the HTML app on the repo Pages: [https://derekkaknes.github.io/brookins4council/](https://derekkaknes.github.io/brookins4council/)
+you can view the HTML app on the repo Pages: [https://derekkaknes.github.io/brookins4council/](https://derekkaknes.github.io/brookins4council/). You can also view early voting trends by zip code at [/trend](https://derekkaknes.github.io/brookins4council/trend).
 
 This application was created in support of [Harvey Brookins for City Council](https://harvey4roanoke.com/)
