@@ -33,7 +33,8 @@
             <div class="bg-white p-2 rounded-lg shadow-sm border border-slate-200">
                 <label for="zip-selector" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Select Area</label>
                 <select id="zip-selector" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded focus:ring-blue-500 focus:border-blue-500 block p-2 cursor-pointer outline-none font-medium">
-                    <option value="ALL" selected>Citywide Total</option>
+                    <option value="COMPARE" selected>Compare All Zip Codes</option>
+                    <option value="ALL">Citywide Total</option>
                     <option value="24011">Zip Code 24011</option>
                     <option value="24012">Zip Code 24012</option>
                     <option value="24013">Zip Code 24013</option>
@@ -50,7 +51,7 @@
         <!-- Dynamic Statistics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
-                <span class="text-sm font-semibold text-slate-500 uppercase">Current 2026 Votes (Jul 29)</span>
+                <span class="text-sm font-semibold text-slate-500 uppercase">Current 2026 Votes (Aug 1)</span>
                 <span id="stat-current" class="text-4xl font-bold text-blue-600 mt-2">--</span>
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
@@ -75,23 +76,23 @@
     <script>
         // The definitive dataset parsed from the provided documents
         const rawVotingData = {
-            "24011": { jun26: 5, jul01: 7, jul08: 7, jul15: 7, jul22: 14, jul29: 15, jun2024: 27 },
-            "24012": { jun26: 100, jul01: 116, jul08: 139, jul15: 162, jul22: 182, jul29: 232, jun2024: 409 },
-            "24013": { jun26: 24, jul01: 26, jul08: 33, jul15: 38, jul22: 48, jul29: 60, jun2024: 85 },
-            "24014": { jun26: 79, jul01: 93, jul08: 100, jul15: 125, jul22: 155, jul29: 234, jun2024: 388 },
-            "24015": { jun26: 116, jul01: 132, jul08: 162, jul15: 199, jul22: 244, jul29: 382, jun2024: 749 },
-            "24016": { jun26: 60, jul01: 65, jul08: 78, jul15: 86, jul22: 111, jul29: 155, jun2024: 375 },
-            "24017": { jun26: 171, jul01: 199, jul08: 229, jul15: 277, jul22: 345, jul29: 458, jun2024: 892 },
-            "24018": { jun26: 55, jul01: 66, jul08: 75, jul15: 87, jul22: 102, jul29: 124, jun2024: 221 },
-            "24019": { jun26: 12, jul01: 18, jul08: 22, jul15: 25, jul22: 38, jul29: 51, jun2024: 96 }
+            "24011": { jun26: 5, jul01: 7, jul08: 7, jul15: 7, jul22: 14, jul29: 15, aug01: 22, jun2024: 27 },
+            "24012": { jun26: 100, jul01: 116, jul08: 139, jul15: 162, jul22: 182, jul29: 232, aug01: 266, jun2024: 409 },
+            "24013": { jun26: 24, jul01: 26, jul08: 33, jul15: 38, jul22: 48, jul29: 60, aug01: 72, jun2024: 85 },
+            "24014": { jun26: 79, jul01: 93, jul08: 100, jul15: 125, jul22: 155, jul29: 234, aug01: 283, jun2024: 388 },
+            "24015": { jun26: 116, jul01: 132, jul08: 162, jul15: 199, jul22: 244, jul29: 382, aug01: 467, jun2024: 749 },
+            "24016": { jun26: 60, jul01: 65, jul08: 78, jul15: 86, jul22: 111, jul29: 155, aug01: 197, jun2024: 375 },
+            "24017": { jun26: 171, jul01: 199, jul08: 229, jul15: 277, jul22: 345, jul29: 458, aug01: 553, jun2024: 892 },
+            "24018": { jun26: 55, jul01: 66, jul08: 75, jul15: 87, jul22: 102, jul29: 124, aug01: 147, jun2024: 221 },
+            "24019": { jun26: 12, jul01: 18, jul08: 22, jul15: 25, jul22: 38, jul29: 51, aug01: 68, jun2024: 96 }
         };
 
-        const timeLabels = ['June 26', 'July 1', 'July 8', 'July 15', 'July 22', 'July 29'];
-        const keys = ['jun26', 'jul01', 'jul08', 'jul15', 'jul22', 'jul29'];
+        const timeLabels = ['June 26', 'July 1', 'July 8', 'July 15', 'July 22', 'July 29', 'August 1'];
+        const keys = ['jun26', 'jul01', 'jul08', 'jul15', 'jul22', 'jul29', 'aug01'];
 
         // Calculate Citywide totals
         const cityTotal = {
-            jun26: 0, jul01: 0, jul08: 0, jul15: 0, jul22: 0, jul29: 0, jun2024: 0
+            jun26: 0, jul01: 0, jul08: 0, jul15: 0, jul22: 0, jul29: 0, aug01: 0, jun2024: 0
         };
 
         Object.values(rawVotingData).forEach(zip => {
@@ -101,31 +102,27 @@
             cityTotal.jul15 += zip.jul15;
             cityTotal.jul22 += zip.jul22;
             cityTotal.jul29 += zip.jul29;
+            cityTotal.aug01 += zip.aug01;
             cityTotal.jun2024 += zip.jun2024;
         });
 
         rawVotingData['ALL'] = cityTotal;
 
+        const zipColors = {
+            "24011": "#94a3b8", // slate-400
+            "24012": "#ef4444", // red-500
+            "24013": "#f97316", // orange-500
+            "24014": "#eab308", // yellow-500
+            "24015": "#22c55e", // green-500
+            "24016": "#06b6d4", // cyan-500
+            "24017": "#3b82f6", // blue-500
+            "24018": "#a855f7", // purple-500
+            "24019": "#ec4899"  // pink-500
+        };
+
         let currentChart = null;
 
         function renderChart(zipKey) {
-            const data = rawVotingData[zipKey];
-            
-            // Extract the time series data for 2026
-            const trendData = keys.map(k => data[k]);
-            
-            // Create a flat array for the horizontal 2024 benchmark line
-            const benchmarkData = Array(timeLabels.length).fill(data.jun2024);
-
-            // Update UI Stats
-            const currentVotes = data.jul29;
-            const targetVotes = data.jun2024;
-            const percent = ((currentVotes / targetVotes) * 100).toFixed(1);
-
-            document.getElementById('stat-current').innerText = currentVotes.toLocaleString();
-            document.getElementById('stat-2024').innerText = targetVotes.toLocaleString();
-            document.getElementById('stat-percent').innerText = `${percent}%`;
-
             const ctx = document.getElementById('trendChart').getContext('2d');
 
             // Destroy previous chart instance if it exists to prevent overlapping bugs
@@ -133,42 +130,91 @@
                 currentChart.destroy();
             }
 
-            // Configure gradient for the line chart fill
-            const gradientFill = ctx.createLinearGradient(0, 0, 0, 400);
-            gradientFill.addColorStop(0, 'rgba(37, 99, 235, 0.2)'); // Blue-600 with opacity
-            gradientFill.addColorStop(1, 'rgba(37, 99, 235, 0)');
+            let chartDatasets = [];
+
+            if (zipKey === 'COMPARE') {
+                // Set UI Stats to Citywide overall health
+                const currentVotes = cityTotal.aug01;
+                const targetVotes = cityTotal.jun2024;
+                const percent = ((currentVotes / targetVotes) * 100).toFixed(1);
+
+                document.getElementById('stat-current').innerText = currentVotes.toLocaleString();
+                document.getElementById('stat-2024').innerText = targetVotes.toLocaleString();
+                document.getElementById('stat-percent').innerText = `${percent}%`;
+
+                // Create a distinct line for each Zip Code
+                Object.keys(rawVotingData).forEach(zip => {
+                    if (zip !== 'ALL') {
+                        chartDatasets.push({
+                            label: `Zip ${zip}`,
+                            data: keys.map(k => rawVotingData[zip][k]),
+                            borderColor: zipColors[zip],
+                            backgroundColor: zipColors[zip],
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            fill: false,
+                            tension: 0.3 // Smooth curves
+                        });
+                    }
+                });
+            } else {
+                const data = rawVotingData[zipKey];
+                
+                // Extract the time series data for 2026
+                const trendData = keys.map(k => data[k]);
+                
+                // Create a flat array for the horizontal 2024 benchmark line
+                const benchmarkData = Array(timeLabels.length).fill(data.jun2024);
+
+                // Update UI Stats
+                const currentVotes = data.aug01;
+                const targetVotes = data.jun2024;
+                const percent = ((currentVotes / targetVotes) * 100).toFixed(1);
+
+                document.getElementById('stat-current').innerText = currentVotes.toLocaleString();
+                document.getElementById('stat-2024').innerText = targetVotes.toLocaleString();
+                document.getElementById('stat-percent').innerText = `${percent}%`;
+
+                // Configure gradient for the single line chart fill
+                const gradientFill = ctx.createLinearGradient(0, 0, 0, 400);
+                gradientFill.addColorStop(0, 'rgba(37, 99, 235, 0.2)'); // Blue-600 with opacity
+                gradientFill.addColorStop(1, 'rgba(37, 99, 235, 0)');
+
+                chartDatasets = [
+                    {
+                        label: zipKey === 'ALL' ? '2026 Citywide Early Votes' : `2026 Early Votes (Zip ${zipKey})`,
+                        data: trendData,
+                        borderColor: '#2563eb', // blue-600
+                        backgroundColor: gradientFill,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#2563eb',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        fill: true,
+                        tension: 0.3 // Smooth curves
+                    },
+                    {
+                        label: 'June 2024 Primary Total',
+                        data: benchmarkData,
+                        borderColor: '#ef4444', // red-500
+                        borderWidth: 2,
+                        borderDash: [8, 4], // Dashed line effect
+                        pointRadius: 0, // Hide points on the horizontal line
+                        pointHoverRadius: 0,
+                        fill: false,
+                        tension: 0
+                    }
+                ];
+            }
 
             currentChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: timeLabels,
-                    datasets: [
-                        {
-                            label: '2026 Cumulative Early Votes',
-                            data: trendData,
-                            borderColor: '#2563eb', // blue-600
-                            backgroundColor: gradientFill,
-                            borderWidth: 3,
-                            pointBackgroundColor: '#ffffff',
-                            pointBorderColor: '#2563eb',
-                            pointBorderWidth: 2,
-                            pointRadius: 5,
-                            pointHoverRadius: 7,
-                            fill: true,
-                            tension: 0.3 // Smooth curves
-                        },
-                        {
-                            label: 'June 2024 Primary Total',
-                            data: benchmarkData,
-                            borderColor: '#ef4444', // red-500
-                            borderWidth: 2,
-                            borderDash: [8, 4], // Dashed line effect
-                            pointRadius: 0, // Hide points on the horizontal line
-                            pointHoverRadius: 0,
-                            fill: false,
-                            tension: 0
-                        }
-                    ]
+                    datasets: chartDatasets
                 },
                 options: {
                     responsive: true,
@@ -246,9 +292,9 @@
             });
         }
 
-        // Initialize the chart with 'ALL' citywide data on load
+        // Initialize the chart with 'COMPARE' view on load
         window.onload = () => {
-            renderChart('ALL');
+            renderChart('COMPARE');
         };
 
         // Listen for dropdown changes
