@@ -209,6 +209,22 @@
                         tension: 0
                     }
                 ];
+
+                // Only show the 2024 overall early vote benchmark when viewing the Citywide Total
+                if (zipKey === 'ALL') {
+                    const earlyVote2024Data = Array(timeLabels.length).fill(1675);
+                    chartDatasets.push({
+                        label: '2024 Early Vote',
+                        data: earlyVote2024Data,
+                        borderColor: '#f59e0b', // amber-500
+                        borderWidth: 2,
+                        borderDash: [4, 4], // Tighter dashed line effect to distinguish from the primary total
+                        pointRadius: 0, 
+                        pointHoverRadius: 0,
+                        fill: false,
+                        tension: 0
+                    });
+                }
             }
 
             currentChart = new Chart(ctx, {
