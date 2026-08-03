@@ -51,7 +51,7 @@
         <!-- Dynamic Statistics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
-                <span class="text-sm font-semibold text-slate-500 uppercase">Current 2026 Votes (Aug 1)</span>
+                <span class="text-sm font-semibold text-slate-500 uppercase">Current 2026 Votes (Aug 3)</span>
                 <span id="stat-current" class="text-4xl font-bold text-blue-600 mt-2">--</span>
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col">
@@ -76,23 +76,23 @@
     <script>
         // The definitive dataset parsed from the provided documents
         const rawVotingData = {
-            "24011": { jun26: 5, jul01: 7, jul08: 7, jul15: 7, jul22: 14, jul29: 15, aug01: 22, jun2024: 27 },
-            "24012": { jun26: 100, jul01: 116, jul08: 139, jul15: 162, jul22: 182, jul29: 232, aug01: 266, jun2024: 409 },
-            "24013": { jun26: 24, jul01: 26, jul08: 33, jul15: 38, jul22: 48, jul29: 60, aug01: 72, jun2024: 85 },
-            "24014": { jun26: 79, jul01: 93, jul08: 100, jul15: 125, jul22: 155, jul29: 234, aug01: 283, jun2024: 388 },
-            "24015": { jun26: 116, jul01: 132, jul08: 162, jul15: 199, jul22: 244, jul29: 382, aug01: 467, jun2024: 749 },
-            "24016": { jun26: 60, jul01: 65, jul08: 78, jul15: 86, jul22: 111, jul29: 155, aug01: 197, jun2024: 375 },
-            "24017": { jun26: 171, jul01: 199, jul08: 229, jul15: 277, jul22: 345, jul29: 458, aug01: 553, jun2024: 892 },
-            "24018": { jun26: 55, jul01: 66, jul08: 75, jul15: 87, jul22: 102, jul29: 124, aug01: 147, jun2024: 221 },
-            "24019": { jun26: 12, jul01: 18, jul08: 22, jul15: 25, jul22: 38, jul29: 51, aug01: 68, jun2024: 96 }
+            "24011": { jun26: 5, jul01: 7, jul08: 7, jul15: 7, jul22: 14, jul29: 15, aug01: 22, aug03: 27, jun2024: 27 },
+            "24012": { jun26: 100, jul01: 116, jul08: 139, jul15: 162, jul22: 182, jul29: 232, aug01: 266, aug03: 304, jun2024: 409 },
+            "24013": { jun26: 24, jul01: 26, jul08: 33, jul15: 38, jul22: 48, jul29: 60, aug01: 72, aug03: 86, jun2024: 85 },
+            "24014": { jun26: 79, jul01: 93, jul08: 100, jul15: 125, jul22: 155, jul29: 234, aug01: 283, aug03: 312, jun2024: 388 },
+            "24015": { jun26: 116, jul01: 132, jul08: 162, jul15: 199, jul22: 244, jul29: 382, aug01: 467, aug03: 517, jun2024: 749 },
+            "24016": { jun26: 60, jul01: 65, jul08: 78, jul15: 86, jul22: 111, jul29: 155, aug01: 197, aug03: 236, jun2024: 375 },
+            "24017": { jun26: 171, jul01: 199, jul08: 229, jul15: 277, jul22: 345, jul29: 458, aug01: 553, aug03: 623, jun2024: 892 },
+            "24018": { jun26: 55, jul01: 66, jul08: 75, jul15: 87, jul22: 102, jul29: 124, aug01: 147, aug03: 160, jun2024: 221 },
+            "24019": { jun26: 12, jul01: 18, jul08: 22, jul15: 25, jul22: 38, jul29: 51, aug01: 68, aug03: 84, jun2024: 96 }
         };
 
-        const timeLabels = ['June 26', 'July 1', 'July 8', 'July 15', 'July 22', 'July 29', 'August 1'];
-        const keys = ['jun26', 'jul01', 'jul08', 'jul15', 'jul22', 'jul29', 'aug01'];
+        const timeLabels = ['June 26', 'July 1', 'July 8', 'July 15', 'July 22', 'July 29', 'August 1', 'August 3'];
+        const keys = ['jun26', 'jul01', 'jul08', 'jul15', 'jul22', 'jul29', 'aug01', 'aug03'];
 
         // Calculate Citywide totals
         const cityTotal = {
-            jun26: 0, jul01: 0, jul08: 0, jul15: 0, jul22: 0, jul29: 0, aug01: 0, jun2024: 0
+            jun26: 0, jul01: 0, jul08: 0, jul15: 0, jul22: 0, jul29: 0, aug01: 0, aug03: 0, jun2024: 0
         };
 
         Object.values(rawVotingData).forEach(zip => {
@@ -103,6 +103,7 @@
             cityTotal.jul22 += zip.jul22;
             cityTotal.jul29 += zip.jul29;
             cityTotal.aug01 += zip.aug01;
+            cityTotal.aug03 += zip.aug03;
             cityTotal.jun2024 += zip.jun2024;
         });
 
@@ -134,7 +135,7 @@
 
             if (zipKey === 'COMPARE') {
                 // Set UI Stats to Citywide overall health
-                const currentVotes = cityTotal.aug01;
+                const currentVotes = cityTotal.aug03;
                 const targetVotes = cityTotal.jun2024;
                 const percent = ((currentVotes / targetVotes) * 100).toFixed(1);
 
@@ -168,7 +169,7 @@
                 const benchmarkData = Array(timeLabels.length).fill(data.jun2024);
 
                 // Update UI Stats
-                const currentVotes = data.aug01;
+                const currentVotes = data.aug03;
                 const targetVotes = data.jun2024;
                 const percent = ((currentVotes / targetVotes) * 100).toFixed(1);
 
